@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Try Your Luck</title>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #000000, #0d47a1);
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    h2 {
+      margin-top: 15px;
+    }
+
+    /* INPUT BOX */
+    #inputBox {
+      width: 85%;
+      margin: auto;
+      background: white;
+      padding: 8px;
+      border-radius: 10px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #tags {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+    }
+
+    #nameInput {
+      border: none;
+      outline: none;
+      min-width: 120px;
+      font-size: 14px;
+    }
+
+    .tag {
+      background: #2196f3;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .tag span {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      margin: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #1976d2;
+      color: white;
+      cursor: pointer;
+    }
+
+    #loading {
+      font-size: 28px;
+      margin-top: 20px;
+      display: none;
+      animation: blink 0.5s infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.3; }
+    }
+
+    /* RESULT BOX */
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 15px;
+      width: 85%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* WINNER */
+    .winner-name {
+      color: white;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00ffcc;
+    }
+
+    .winner-amount {
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    /* LOSER */
+    .loser-name {
+      color: #ff4d4d;
+      font-weight: bold;
+      text-shadow: 0 0 8px red;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <h2>🎯 Try Your Luck</h2>
+
+  <div id="inputBox">
+    <div id="tags"></div>
+    <input type="text" id="nameInput" placeholder="Type name , or press Enter">
+  </div>
+
+  <br>
+
+  <select id="winnerCount">
+    <option value="1">1 Winner</option>
+    <option value="2">2 Winners</option>
+    <option value="3">3 Winners</option>
+    <option value="5">5 Winners</option>
+    <option value="10">10 Winners</option>
+  </select>
+
+  <br>
+
+  <input type="number" id="amount" placeholder="Enter Amount">
+
+  <br>
+
+  <button onclick="setAmount(100)">100</button>
+  <button onclick="setAmount(200)">200</button>
+  <button onclick="setAmount(500)">500</button>
+  <button onclick="setAmount(1000)">1000</button>
+
+  <br>
+
+  <button onclick="startLottery()">Start Lottery</button>
+
+  <div id="loading">🎡 Rolling...</div>
+  <div id="result"></div>
+
+  <script>
+    let namesList = [];
+
+    let input = document.getElementById("nameInput");
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+
+        let value = input.value.trim();
+        if (value === "") return;
+
+        addName(value);
+        input.value = "";
+      }
+    });
+
+    function addName(name) {
+      let lower = name.toLowerCase();
+
+      if (namesList.map(n => n.toLowerCase()).includes(lower)) {
+        alert("⚠️ Duplicate name!");
+        return;
+      }
+
+      namesList.push(name);
+      renderTags();
+    }
+
+    function renderTags() {
+      let tagsDiv = document.getElementById("tags");
+      tagsDiv.innerHTML = "";
+
+      namesList.forEach((n, index) => {
+        let tag = document.createElement("div");
+        tag.className = "tag";
+        tag.innerHTML = `${index + 1}. ${n} <span onclick="removeTag(${index})">×</span>`;
+        tagsDiv.appendChild(tag);
+      });
+    }
+
+    function removeTag(index) {
+      namesList.splice(index, 1);
+      renderTags();
+    }
+
+    function setAmount(val) {
+      document.getElementById("amount").value = val;
+    }
+
+    function startLottery() {
+      let names = namesList;
+      let amount = parseFloat(document.getElementById("amount").value);
+      let winnerCount = parseInt(document.getElementById("winnerCount").value);
+
+      if (names.length < winnerCount) {
+        alert("Players kom ache!");
+        return;
+      }
+
+      if (!amount || amount <= 0) {
+        alert("Valid amount dao!");
+        return;
+      }
+
+      let loading = document.getElementById("loading");
+      let result = document.getElementById("result");
+
+      result.innerHTML = "";
+      loading.style.display = "block";
+
+      let i = 0;
+
+      function roll() {
+        let randomName = names[Math.floor(Math.random() * names.length)];
+        loading.innerText = "🎡 " + randomName;
+
+        i++;
+
+        if (i < 40) {
+          setTimeout(roll, 40 + i * 10);
+        } else {
+          finishLottery(names, amount, winnerCount);
+        }
+      }
+
+      roll();
+    }
+
+    function finishLottery(names, amount, winnerCount) {
+      let loading = document.getElementById("loading");
+      let result = document.getElementById("result");
+
+      let shuffled = [...names].sort(() => Math.random() - 0.5);
+
+      let winners = shuffled.slice(0, winnerCount);
+      let losers = shuffled.slice(winnerCount);
+
+      let split = (amount / winnerCount).toFixed(2);
+
+      loading.style.display = "none";
+
+      result.innerHTML = `💰 Total: ₹${amount}<br><br>🏆 Winners:<br>`;
+
+      winners.forEach((w, i) => {
+        setTimeout(() => {
+          result.innerHTML += `✨ <span class="winner-name">${w}</span> → <span class="winner-amount">₹${split}</span><br>`;
+        }, i * 500);
+      });
+
+      setTimeout(() => {
+        result.innerHTML += `<br>💀 Losers:<br>`;
+
+        losers.forEach((l, i) => {
+          setTimeout(() => {
+            result.innerHTML += `🎰 <span class="loser-name">${l}</span><br>`;
+          }, i * 300);
+        });
+      }, winners.length * 500 + 500);
+    }
+
+  </script>
+
+</body>
+</html>
